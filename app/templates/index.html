@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>TAMAGO-PI Sound Scape</title>
+  <meta name="description" content="">
+  <style>
+    body {
+      backgorund-color: #fafafa;
+    }
+    canvas {
+      display: block;
+      background-color: #eee;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .content{
+      width:100%;
+      height:800px;
+      overflow-x: scroll;
+    }
+  </style>
+</head>
+<body>
+
+<select name="data" id="data_selector">
+{% for path in message%}
+<option value="{{path}}">{{path}}</option>
+{% endfor %}
+</select>
+<a id="download" href="#" download="" onclick="handleDownload()">Download</a>
+
+<div class="content">
+  <canvas id="canvas" width="1200px" height="720px"></canvas>
+</div>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script type="text/javascript">
+function draw(all_data) {
+	var canvas = document.getElementById('canvas');
+	var ctx = canvas.getContext('2d');
+	var w_offset=100
+	canvas.width=all_data.length+w_offset;
+	var w=canvas.width; //1200~
+	var h=canvas.height; //720
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	var deg=[-180,-120,-60,0,60,120,180]
+	ctx.font = "italic 18px Arial";
+	for(k=0;k<7;k++){
+		ctx.strokeText(deg[k],30,k*(h-30)/6+15,100);
+	}
+	for(k=1;k<6;k++){
+		ctx.beginPath();
+		ctx.setLineDash([2, 2]);
+		ctx.moveTo(w_offset,h*k/6);
+		ctx.lineTo(w,h*k/6);
+		ctx.stroke();
+	}
+	for(k=0;k<3;k++){
+		ctx.beginPath();
+		ctx.setLineDash([2, 2]);
+		ctx.moveTo(w_offset+k*500,0);
+		ctx.lineTo(w_offset+k*500,h);
+		ctx.stroke();
+	}
+	for(var i = 0;i < all_data.length; i++){
+		for(var j = 0;j < all_data[i].length; j++){
+			obj=all_data[i][j]
+			rad=Math.atan2(obj["x"][1],obj["x"][0]);
+			y=360*rad/Math.PI+360
+			ctx.beginPath() ;
+			ctx.arc( i+w_offset, y, 5, 0 * Math.PI / 180, 360 * Math.PI / 180, false ) ;
+			ctx.fillStyle = "rgba(255,0,0,0.8)" ;
+			ctx.fill() ;
+		}
+	}
+	
+}
+function load_data(filename){
+	$.get(filename, function(data){
+		var lines = data.split('\n');
+		all_data=[]
+		for(var line = 0; line < lines.length; line++){
+			console.log(lines[line]);
+			if(lines[line]!=""){
+				obj = JSON.parse(lines[line]);
+				all_data.push(obj);
+			}
+		}
+		console.log(all_data);
+		draw(all_data);
+	});
+}
+function handleDownload(){
+	filename=$("#data_selector").val();
+	document.getElementById("download").href=filename
+}
+$(function() {
+	$("#data_selector").change(function() {
+		var filename = $(this).val();
+		load_data(filename);
+	});
+});
+
+</script>
+</body>
+
+</html>
+
